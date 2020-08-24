@@ -27,11 +27,11 @@ import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.Frame;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -110,7 +110,7 @@ public class AugmentedImageActivity extends AppCompatActivity {
                         boolean mode = getIntent().getBooleanExtra("mode", true);
                         if (mode) {
                             AugmentedImageNode node = new AugmentedImageNode(this);
-                            node.setImage(augmentedImage);
+                            node.setImage(arFragment.getTransformationSystem(), augmentedImage);
                             augmentedImageMap.put(augmentedImage, node);
                             this.arFragment.getArSceneView().getScene().addChild(node);
                         } else {
@@ -119,11 +119,13 @@ public class AugmentedImageActivity extends AppCompatActivity {
                                     .thenAccept(viewRenderable -> {
                                         ImageView imageView = viewRenderable.getView().findViewById(R.id.image);
                                         Glide.with(this).load("file:///android_asset/earth.gif").into(imageView);
-                                        TransformableNode transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+                                        //TransformableNode transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+                                        //AnchorNode transformableNode = new AnchorNode();
+                                        Node transformableNode = new Node();
                                         transformableNode.setParent(node);
                                         transformableNode.setLocalRotation(Quaternion.eulerAngles(new Vector3(-90, 0, 0)));
                                         Vector3 localPosition = transformableNode.getLocalPosition();
-
+                                        //transformableNode.setAnchor(augmentedImage.createAnchor(augmentedImage.getCenterPose()));
                                         transformableNode.setLocalPosition(new Vector3(localPosition.x, localPosition.y, localPosition.z + 0.5f * augmentedImage.getExtentZ()));
                                         transformableNode.setRenderable(viewRenderable);
                                     }).exceptionally(throwable -> {

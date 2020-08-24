@@ -19,12 +19,17 @@ package com.cw.artest.augmentedimage;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.HitTestResult;
+import com.google.ar.sceneform.animation.ModelAnimator;
 import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.rendering.AnimationData;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.ux.TransformableNode;
+import com.google.ar.sceneform.ux.TransformationSystem;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -35,99 +40,81 @@ import java.util.concurrent.CompletableFuture;
 @SuppressWarnings({"AndroidApiChecker"})
 public class AugmentedImageNode extends AnchorNode {
 
-  private static final String TAG = "AugmentedImageNode";
+    private static final String TAG = "AugmentedImageNode";
 
-  // The augmented image represented by this node.
-  private AugmentedImage image;
+    // The augmented image represented by this node.
+    private AugmentedImage image;
+    private CompletableFuture<ModelRenderable> andy;
+    private ModelRenderable renderable;
+    private ModelAnimator animator;
+    private int nextAnimation;
+    private float x;
+    private float y;
 
-  // Models of the 4 corners.  We use completable futures here to simplify
-  // the error handling and asynchronous loading.  The loading is started with the
-  // first construction of an instance, and then used when the image is set.
-  private static CompletableFuture<ModelRenderable> ulCorner;
-  private static CompletableFuture<ModelRenderable> urCorner;
-  private static CompletableFuture<ModelRenderable> lrCorner;
-  private static CompletableFuture<ModelRenderable> llCorner;
-
-  public AugmentedImageNode(Context context) {
-    // Upon construction, start loading the models for the corners of the frame.
-    if (ulCorner == null) {
-      ulCorner =
-          ModelRenderable.builder()
-              .setSource(context, Uri.parse("models/frame_upper_left.sfb"))
-              .build();
-      urCorner =
-          ModelRenderable.builder()
-              .setSource(context, Uri.parse("models/frame_upper_right.sfb"))
-              .build();
-      llCorner =
-          ModelRenderable.builder()
-              .setSource(context, Uri.parse("models/frame_lower_left.sfb"))
-              .build();
-      lrCorner =
-          ModelRenderable.builder()
-              .setSource(context, Uri.parse("models/frame_lower_right.sfb"))
-              .build();
-    }
-  }
-
-  /**
-   * Called when the AugmentedImage is detected and should be rendered. A Sceneform node tree is
-   * created based on an Anchor created from the image. The corners are then positioned based on the
-   * extents of the image. There is no need to worry about world coordinates since everything is
-   * relative to the center of the image, which is the parent node of the corners.
-   */
-  @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
-  public void setImage(AugmentedImage image) {
-    this.image = image;
-
-    // If any of the models are not loaded, then recurse when all are loaded.
-    if (!ulCorner.isDone() || !urCorner.isDone() || !llCorner.isDone() || !lrCorner.isDone()) {
-      CompletableFuture.allOf(ulCorner, urCorner, llCorner, lrCorner)
-          .thenAccept((Void aVoid) -> setImage(image))
-          .exceptionally(
-              throwable -> {
-                Log.e(TAG, "Exception loading", throwable);
-                return null;
-              });
+    public AugmentedImageNode(Context context) {
+        // Upon construction, start loading the models for the corners of the frame.
+        if (andy == null) {
+            andy = ModelRenderable.builder()
+                    .setSource(context, Uri.parse("models/andy_dance.sfb"))
+                    .build()
+                    .thenApply(renderable -> this.renderable = renderable);
+        }
     }
 
-    // Set the anchor based on the center of the image.
-    setAnchor(image.createAnchor(image.getCenterPose()));
+    /**
+     * Called when the AugmentedImage is detected and should be rendered. A Sceneform node tree is
+     * created based on an Anchor created from the image. The corners are then positioned based on the
+     * extents of the image. There is no need to worry about world coordinates since everything is
+     * relative to the center of the image, which is the parent node of the corners.
+     */
+    @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
+    public void setImage(TransformationSystem transformationSystem, AugmentedImage image) {
+        this.image = image;
 
-    // Make the 4 corner nodes.
-    Vector3 localPosition = new Vector3();
-    Node cornerNode;
+        if (!andy.isDone()) {
+            CompletableFuture.allOf(andy)
+                    .thenAccept((Void aVoid) -> setImage(transformationSystem, image))
+                    .exceptionally(throwable -> {
+                        Log.e(TAG, "Exception loading", throwable);
+                        return null;
+                    });
+        }
 
-    // Upper left corner.
-    localPosition.set(-0.5f * image.getExtentX(), 0.0f, -0.5f * image.getExtentZ());
-    cornerNode = new Node();
-    cornerNode.setParent(this);
-    cornerNode.setLocalPosition(localPosition);
-    cornerNode.setRenderable(ulCorner.getNow(null));
+        setLocalScale(new Vector3(0.2f, 0.2f, 0.2f));
 
-    // Upper right corner.
-    localPosition.set(0.5f * image.getExtentX(), 0.0f, -0.5f * image.getExtentZ());
-    cornerNode = new Node();
-    cornerNode.setParent(this);
-    cornerNode.setLocalPosition(localPosition);
-    cornerNode.setRenderable(urCorner.getNow(null));
+        TransformableNode andy = new TransformableNode(transformationSystem);
+        andy.setParent(this);
+        andy.setRenderable(renderable);
+        andy.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(HitTestResult hitTestResult, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    x = motionEvent.getX();
+                    y = motionEvent.getY();
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    if (motionEvent.getX() - x < 1 && motionEvent.getY() - y < 1) {
+                        onPlayAnimation();
+                    }
+                }
+                return false;
+            }
+        });
 
-    // Lower right corner.
-    localPosition.set(0.5f * image.getExtentX(), 0.0f, 0.5f * image.getExtentZ());
-    cornerNode = new Node();
-    cornerNode.setParent(this);
-    cornerNode.setLocalPosition(localPosition);
-    cornerNode.setRenderable(lrCorner.getNow(null));
+        // Set the anchor based on the center of the image.
+        setAnchor(image.createAnchor(image.getCenterPose()));
+    }
 
-    // Lower left corner.
-    localPosition.set(-0.5f * image.getExtentX(), 0.0f, 0.5f * image.getExtentZ());
-    cornerNode = new Node();
-    cornerNode.setParent(this);
-    cornerNode.setLocalPosition(localPosition);
-    cornerNode.setRenderable(llCorner.getNow(null));
-  }
+    public void onPlayAnimation() {
+        if (animator == null || !animator.isRunning()) {
+            AnimationData data = renderable.getAnimationData(nextAnimation);
+            nextAnimation = (nextAnimation + 1) % renderable.getAnimationDataCount();
+            animator = new ModelAnimator(data, renderable);
+            animator.start();
+        }
+    }
 
-  public AugmentedImage getImage() {
-    return image;
-  }
+    public AugmentedImage getImage() {
+        return image;
+    }
 }
