@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.cw.artest">
 
     <application
@@ -27,6 +28,14 @@
         <meta-data
             android:name="com.google.ar.core"
             android:value="required" />
+
+
+        <activity
+            android:name=".video.PlayPickActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Full"
+            tools:ignore="LockedOrientationActivity" />
     </application>
 
     <!-- Indicates that this app requires Google Play Services for AR ("AR Required") and results in

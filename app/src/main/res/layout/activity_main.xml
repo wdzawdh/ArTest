@@ -13,37 +13,34 @@
         android:gravity="center_horizontal"
         android:orientation="vertical">
 
-        <androidx.cardview.widget.CardView
+        <Button
             android:id="@+id/startModel"
             android:layout_width="300dp"
-            android:layout_height="180dp"
-            android:foreground="?android:attr/selectableItemBackground"
-            app:cardBackgroundColor="#9FA8DA"
-            app:cardCornerRadius="20dp">
+            android:text="模型展示"
+            android:layout_height="wrap_content"/>
 
-            <ImageView
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_gravity="center"
-                android:src="@drawable/model_icon" />
-
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
+        <Button
             android:id="@+id/startImage"
             android:layout_width="300dp"
-            android:layout_height="180dp"
-            android:layout_marginTop="20dp"
-            android:foreground="?android:attr/selectableItemBackground"
-            app:cardBackgroundColor="#9FA8DA"
-            app:cardCornerRadius="20dp">
+            android:text="图片展示"
+            android:layout_height="wrap_content"/>
 
-            <ImageView
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_gravity="center"
-                android:src="@drawable/image_icon" />
+        <Button
+            android:id="@+id/startVideo"
+            android:layout_width="300dp"
+            android:text="视频展示"
+            android:layout_height="wrap_content"/>
 
-        </androidx.cardview.widget.CardView>
+        <Button
+            android:id="@+id/startVideo2"
+            android:layout_width="300dp"
+            android:text="视频展示(透明视频)"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/startVideo3"
+            android:layout_width="300dp"
+            android:text="视频展示（不跟踪物体）"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 </RelativeLayout>
